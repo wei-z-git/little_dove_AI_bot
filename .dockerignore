@@ -1,0 +1,12 @@
+.venv
+accounts
+.vscode
+config
+nonebot-plugin-gpt3
+.env-test
+__pycache__
+.DS_Store
+
+Changelog.md
+README.md
+.gitlab-ci.yml

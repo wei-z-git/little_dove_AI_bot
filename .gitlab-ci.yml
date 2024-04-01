@@ -1,0 +1,35 @@
+stages:
+  - build-latest
+  - build-release
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+variables:
+  DOCKER_OPTS: "--registry-mirror=https://ocmrva74.mirror.aliyuncs.com"
+# Use the official docker image.
+image: docker:20.10.16
+services:
+  - docker:20.10.16-dind
+before_script:
+  - docker login -u "$ACR_username" -p "$ACR_password" $CI_REGISTRY
+  
+Daily:
+  stage: build-latest
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+Release:
+  # Use the official docker image.
+  stage: build-release
+  script:
+    - docker pull  $CI_REGISTRY_IMAGE:latest
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG .
+    - docker push  $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+  rules:
+    - if: $CI_COMMIT_TAG

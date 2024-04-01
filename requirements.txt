@@ -1,0 +1,26 @@
+nonebot2[fastapi]==2.0.1
+nonebot-adapter-onebot==2.2.3
+# plugins
+nonebot-plugin-gocqhttp==0.6.12
+# nonebot-plugin-chatgpt==0.7.4
+# nonebot-plugin-gpt3==1.0.18
+nonebot_plugin_memes==0.3.10
+haruka-bot==1.6.0.post4
+nonebot-plugin-forwarder==2.1.6
+nonebot-plugin-wordcloud==0.5.1
+
+
+# Required by chat-gpt/haruka plugin
+playwright==1.35.0
+
+# Required by nonebot-plugin-wordcloud
+wordcloud==1.8.2.2
+nonebot-plugin-easy-group-manager
+
+nonebot_plugin_chatrecorder==0.4.1
+nonebot-plugin-send-anything-anywhere==0.3.0
+nonebot-plugin-alconna==0.19.2
+
+
+webuiapi
+nonebot-plugin-apscheduler==0.3.0
