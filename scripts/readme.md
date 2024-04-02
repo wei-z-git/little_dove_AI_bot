@@ -6,7 +6,10 @@ pc to phone:
 
 ssh root@192.168.28.96 -p 8022
 
-
 设置cron
 
 crontab scripts/crontab
+
+termux安装wol
+
+pkg install wol
