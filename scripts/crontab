@@ -2,3 +2,7 @@
 55 2 * * * $HOME/little_dove_ai_bot/scripts/start_frp.sh
 55 2 * * * $HOME/little_dove_ai_bot/scripts/start_sd.sh
 10 3 * * * $HOME/little_dove_ai_bot/scripts/shutdown.sh
+
+25 22 * * * $HOME/little_dove_ai_bot/scripts/start_WoL.sh
+27 2 * * * $HOME/little_dove_ai_bot/scripts/start_frp.sh
+27 2 * * * $HOME/little_dove_ai_bot/scripts/start_sd.sh
