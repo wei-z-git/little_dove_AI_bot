@@ -3,7 +3,7 @@
 55 2 * * * $HOME/little_dove_AI_bot/scripts/start_sd.sh
 10 3 * * * $HOME/little_dove_AI_bot/scripts/shutdown.sh
 
-52 22 * * * $HOME/little_dove_AI_bot/scripts/start_WoL.sh
-53 22 * * * $HOME/little_dove_AI_bot/scripts/start_frp.sh
-53 22 * * * $HOME/little_dove_AI_bot/scripts/start_sd.sh
-55 22 * * * $HOME/little_dove_AI_bot/scripts/shutdown.sh
+59 22 * * * $HOME/little_dove_AI_bot/scripts/start_WoL.sh
+01 23 * * * $HOME/little_dove_AI_bot/scripts/start_frp.sh
+01 23 * * * $HOME/little_dove_AI_bot/scripts/start_sd.sh
+03 23 * * * $HOME/little_dove_AI_bot/scripts/shutdown.sh
