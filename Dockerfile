@@ -1,4 +1,4 @@
-FROM registry.jihulab.com/nonebot2-wei-z/nonebot2-base-image:0.0.1
+FROM registry.cn-hangzhou.aliyuncs.com/wei-z-git/nonebot2-base-image:latest
 
 
 WORKDIR /app
