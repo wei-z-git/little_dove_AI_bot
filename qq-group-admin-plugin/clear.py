@@ -17,7 +17,6 @@ from .SDUtils import SDUtils
 from .config import plugin_config
 
 
-
 async def search_group_mem_list_detail(bot: Bot, matcher: Matcher, event: GroupMessageEvent) -> None:
     """
         查询不活跃的成员明细
@@ -104,7 +103,9 @@ async def send_ai_image(bot: Bot, matcher: Matcher, event: GroupMessageEvent) ->
         msg.append(MessageSegment.image(img_byte_array))
         msg.append(MessageSegment.text(f"\n重生中...\n\n新造的人:\n"))
         msg.append(MessageSegment.image(image_BytesIO))
-        await matcher.send(msg)
+        # [TODO]temp solution!!!!
+        bot = await get_bot("3320741388")
+        await bot.send(msg)
 
     except ActionFailed:
         await matcher.finish(f"error")
