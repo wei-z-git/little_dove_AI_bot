@@ -131,8 +131,8 @@ class SDUtils:
         return img_byte_array
 
     # @staticmethod
-    async def generate_ai_image_msg(self, bot: Bot, group_id: int) -> Message:
-        member_list = await get_bot().call_api("get_group_member_list", group_id=group_id, no_cache=True)
+    async def generate_ai_image_msg(self, group_id: int) -> Message:
+        member_list = await get_bot("1141560393").call_api("get_group_member_list", group_id=group_id, no_cache=True)
         # 选择最近发言10人
         top10_list = order_member_by_time_dsa(member_list)
 
