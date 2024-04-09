@@ -38,9 +38,8 @@ async def search_group_mem_list(bot: Bot, matcher: Matcher, event: GroupMessageE
     """
     gid = int(event.group_id)
     try:
-        member_list = await get_bot().call_api("get_group_member_list", group_id=gid, no_cache=True)
+        member_list = await get_bot("1141560393").call_api("get_group_member_list", group_id=gid, no_cache=True)
         fly_list = order_member_by_time(member_list)
-        await matcher.send("")
         fly_list_simple = ",\n".join(
             [f"{d['nickname']}:{d['user_id']}" for d in fly_list])
         await matcher.send("请查阅冷库食材清单:\n"+fly_list_simple+"\n -- 消息来自小鸠Joe机器人")
