@@ -127,7 +127,7 @@ matcher_vip_list = on_command(
     'vip', priority=4, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
 matcher_rebir = on_command(
-    '重生', priority=1)
+    '重生', priority=1,permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
 
 @matcher_rebir.handle()
