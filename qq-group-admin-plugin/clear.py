@@ -1,6 +1,6 @@
 from nonebot import on_command, get_bot
 from nonebot.adapters import Message
-from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, MessageSegment,Event
 from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg, Arg, ArgPlainText
@@ -60,7 +60,9 @@ async def kicker_group_mem(bot: Bot, matcher: Matcher, event: GroupMessageEvent)
             qq_nickname = member['nickname']
             print(qq_num)
             await bot.set_group_kick(group_id=gid, user_id=qq_num, reject_add_request="false")
-            await matcher.send("已将 " + str(qq_nickname)+":"+str(qq_num) + " 折跃去冷库！嗖~~\n --消息来自小鸠Joe机器人")
+            bot=get_bot("3320741388")
+            message="已将 " + str(qq_nickname)+":"+str(qq_num) + " 折跃去冷库！嗖~~\n --消息来自小鸠Joe机器人"
+            await bot.send(event,message)
 
     except ActionFailed as e:
         print(e)
@@ -104,8 +106,7 @@ async def send_ai_image(bot: Bot, matcher: Matcher, event: GroupMessageEvent) ->
         msg.append(MessageSegment.text(f"\n重生中...\n\n新造的人:\n"))
         msg.append(MessageSegment.image(image_BytesIO))
         # [TODO]temp solution!!!!
-        bot = await get_bot("3320741388")
-        await bot.send(msg)
+        await bot.send(event,msg)
 
     except ActionFailed:
         await matcher.finish(f"error")
@@ -131,11 +132,12 @@ matcher_rebir = on_command(
 
 @matcher_rebir.handle()
 async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent,  args: Message = CommandArg()):
+    bot =  get_bot("3320741388")
     await send_ai_image(bot, matcher, event)
 
 
 @matcher_ac_message.handle()
-async def _(matcher: Matcher, args: Message = CommandArg()):
+async def _(bot:Bot,matcher: Matcher,event:Event, args: Message = CommandArg()):
     answer_list = ['不语大笨蛋!', 'a宝小可爱么么哒~', '我要吃鸠鸠！嘎嘣..嘎嘣！', 'ac来了吗？如-来-', '你被催眠了，砰砰！',
                    '......', '你个老六', '明年再说', '收到', 'ac是小天使~', '结婚去了，勿扰', '蜜月中，勿扰']
     random_str = random.choice(answer_list)
