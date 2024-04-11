@@ -7,10 +7,11 @@ from PIL import Image
 from PIL.JpegImagePlugin import JpegImageFile
 from typing import Tuple, List
 from nonebot.adapters import Message
-from nonebot.adapters.onebot.v11 import Bot, MessageSegment
+from nonebot.adapters.onebot.v11 import Bot, MessageSegment,GroupMessageEvent
 from .utils import order_member_by_time_dsa
 import random
 from nonebot import get_bot
+from nonebot.exception import ActionFailed
 
 class SDUtils:
 

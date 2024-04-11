@@ -1,7 +1,7 @@
 import nonebot
 
 from . import (
-    clear
+    rebirth,scheduler
 )
 
 driver = nonebot.get_driver()
@@ -13,13 +13,13 @@ async def _():
 
 
 """
-qq群清理
+qq重生
 """
 
 __usage__ = """
 
 """
-__help_plugin_name__ = 'qq群清理'
+__help_plugin_name__ = 'qq重生'
 
 __permission__ = 1
 __help__version__ = '0.1.0'
