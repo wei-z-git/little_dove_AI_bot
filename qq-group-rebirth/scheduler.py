@@ -1,9 +1,9 @@
 import nonebot
 from .config import plugin_config
 from .SDUtils import SDUtils
+from nonebot import require
 require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
-from nonebot import require
 
 
 

@@ -7,7 +7,7 @@ from PIL import Image
 from PIL.JpegImagePlugin import JpegImageFile
 from typing import Tuple, List
 from nonebot.adapters import Message
-from nonebot.adapters.onebot.v11 import Bot, MessageSegment
+from nonebot.adapters.onebot.v11 import MessageSegment
 from .utils import order_member_by_time_dsa
 import random
 from nonebot import get_bot
@@ -62,7 +62,7 @@ class SDUtils:
             "threshold": self.threshold
         }
         # Get tags and serialize
-        json_data = httpx.post(url, json=data).json()
+        json_data = httpx.post(url, json=data,timeout=60).json()
         # 取出tags, 并拼接为str
         caption_dict = json_data['caption']['tag'].keys()
         caption_str = ', '.join(caption_dict)
