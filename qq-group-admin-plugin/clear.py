@@ -74,7 +74,7 @@ matcher_call_robot = on_command('call', aliases={'召唤小鸠机器人', '召�
 
 # 给ac的
 matcher_ac_message = on_command('ac', aliases={
-                                '更新音声', '开始直播'}, priority=4, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
+                                '更新音声', '开始直播'}, priority=4)
 
 # # Interative command
 question = "洒家来啦~~，哥哥有何吩咐:\n  1.查询冷库食材\n  2.查询冷库食材详细\n  3.发送食材！！！\n  0.退出\n请哥哥选择！\n ---消息来自小鸠Joe机器人"
