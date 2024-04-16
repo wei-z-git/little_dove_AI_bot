@@ -18,7 +18,7 @@ matcher_vip_list = on_command(
     'vip', priority=4, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
 matcher_rebir = on_command(
-    '重生', priority=1, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
+    '重生', aliases={'投胎', '转世'}, priority=1, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
 
 @matcher_rebir.handle()
@@ -30,7 +30,7 @@ async def _(bot: Bot, event: GroupMessageEvent):
     try:
         msg = await sd.generate_ai_image_msg(group_id=gid)
     except ActionFailed as e:
-        await  bot.send(event, e)
+        await bot.send(event, e)
     await bot.send(event, message=msg)
 
 
