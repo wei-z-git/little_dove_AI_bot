@@ -4,8 +4,8 @@ from pydantic import BaseModel, Extra
 
 
 class Config(BaseModel, extra=Extra.ignore):
-    ai_api_key: str  # 文心一言api key
-    ai_secret_key: str  #文心一言 secret key
+    ai_api_key: str  # llama中文社区 api key
+    ai_secret_key: str  # llama中文社区 secret key
 
 
 driver = get_driver()
