@@ -1,23 +1,13 @@
-import httpx
 import json
+from openai import OpenAI
 
 
 class Summary:
-    def __init__(self, ai_api_key: str, ai_secret_key: str):
-        self.ai_api_key = ai_api_key
-        self.ai_secret_key = ai_secret_key
-
-    async def get_access_token(self) -> str:
-        '''
-        使用 AK, SK 生成鉴权签名(Access Token)
-        :return: access_token, 或是None(如果错误)
-        '''
-        url = "https://aip.baidubce.com/oauth/2.0/token"
-        params = {"grant_type": "client_credentials",
-                  "client_id": self.ai_api_key, "client_secret": self.ai_secret_key}
-        access_token = str(httpx.post(
-            url, params=params).json().get("access_token"))
-        return access_token
+    def __init__(self, ai_secret_key: str):
+        self.client = OpenAI(
+            api_key=ai_secret_key,
+            base_url="https://api.atomecho.cn/v1",
+        )
 
     async def content_cutting(self, content) -> list:
         '''
@@ -37,23 +27,16 @@ class Summary:
         return chunks_list
 
     async def get_ai_message_res(self, message: str) -> str:
-        content = "如下是一段多个用户参与的聊天记录，换行符代表一条消息的终结，请忽略不文明的词句，提取有意义的词句并总结这段聊天记录:" + message
-        content_list = await self.content_cutting(content)
-        final_result = ""
-        for content_chunk in content_list:
-            url = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions?access_token=" + await self.get_access_token()
-            payload = {"messages": [
-                {"role": "user", "content": content_chunk}
-            ]}
-            payload = json.dumps(payload)
-            headers = {
-                'Content-Type': 'application/json'
-            }
-            try:
-                response = httpx.post(url, headers=headers,
-                                      data=payload, timeout=60).text
-                result = json.loads(response).get('result')
-            except httpx.TimeoutException:
-                result = "请求超时"
-            final_result += result
-        return result
+        content = "如下是一段多个用户参与的聊天记录，请提取有意义的词句并总结这段聊天记录，可以根据内容主题不同分多个段落:" + message
+        # content_list = await self.content_cutting(content)
+        completion = self.client.chat.completions.create(
+            model="Atom-7B-Chat",
+            messages=[
+                {"role": "user", "content": content}
+            ],
+            temperature=0.3,
+            stream=False
+        )
+        # 获取ai总结的结果
+        completion = completion.choices[0].message.content
+        return completion

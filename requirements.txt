@@ -24,3 +24,6 @@ nonebot-plugin-alconna==0.19.2
 
 webuiapi
 nonebot-plugin-apscheduler==0.3.0
+
+# required by qq-group-message-summary
+openai>=1.0

@@ -28,17 +28,17 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
     records = await get_message_records(
         session=session,
         id_type=SessionIdType.GROUP,
-        time_start=datetime.utcnow() - timedelta(days=1),
+        time_start=datetime.now() - timedelta(days=1),
     )
     records_list = []
     for record in records:
         # 1.去除空消息 2.过滤指令"今日群聊" 3.去除机器人id
-        if record.plain_text != "" and "今日群聊" not in record.plain_text and record.session.id1 != "2838376057":
+        if record.plain_text != "" and "今日群聊" and "占卜" not in record.plain_text and record.session.id1 != "3320741388" and record.session.id1 != "2024085613" :
             records_str = f"{record.plain_text}"
             records_list.append(records_str)
     records_merged = '\n'.join(records_list)
     if records_merged == "":
         await matcher.send("没有足够的数据")
     else:
-        ai_summary = await Summary(plugin_config.ai_api_key, plugin_config.ai_secret_key).get_ai_message_res(records_merged)
+        ai_summary = await Summary(plugin_config.ai_secret_key).get_ai_message_res(records_merged)
         await matcher.send(str(ai_summary))
