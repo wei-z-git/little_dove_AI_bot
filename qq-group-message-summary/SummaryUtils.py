@@ -27,7 +27,7 @@ class Summary:
         return chunks_list
 
     async def get_ai_message_res(self, message: str) -> str:
-        content = "如下是一段多个用户参与的聊天记录，请提取有意义的词句并总结这段聊天记录，可以根据内容主题不同分多个段落:" + message
+        content = "如下是一段多个用户参与的聊天记录，请提取有意义的词句并总结这段聊天记录:" + message
         # content_list = await self.content_cutting(content)
         completion = self.client.chat.completions.create(
             model="Atom-7B-Chat",

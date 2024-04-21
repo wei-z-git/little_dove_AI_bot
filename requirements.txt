@@ -5,13 +5,13 @@ nonebot-plugin-gocqhttp==0.6.12
 # nonebot-plugin-chatgpt==0.7.4
 # nonebot-plugin-gpt3==1.0.18
 nonebot_plugin_memes==0.3.10
-haruka-bot==1.6.0.post4
+# haruka-bot==1.6.0.post4
 nonebot-plugin-forwarder==2.1.6
 nonebot-plugin-wordcloud==0.5.1
 
 
 # Required by chat-gpt/haruka plugin
-playwright==1.35.0
+# playwright==1.35.0
 
 # Required by nonebot-plugin-wordcloud
 wordcloud==1.8.2.2
