@@ -21,7 +21,7 @@ nonebot_plugin_chatrecorder==0.4.1
 nonebot-plugin-send-anything-anywhere==0.3.0
 nonebot-plugin-alconna==0.19.2
 
-
+# required by SD webui api
 webuiapi
 nonebot-plugin-apscheduler==0.3.0
 
