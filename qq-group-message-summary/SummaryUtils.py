@@ -41,7 +41,8 @@ class Summary:
         completion = completion.choices[0].message.content
         return completion
 
-    async def load_filter_keywords(self, filepath: str) -> list:
+    async def load_filter_keywords(self) -> list:
+        filepath = self.plugin_config.keywords_file_path
         with open(filepath, 'r', encoding='utf-8') as file:
             keywords = file.readlines()
         # 移除每个关键词末尾的换行符
@@ -49,13 +50,14 @@ class Summary:
         return keywords
     # 过滤用户
 
-    async def filter_user(self, records: list) -> list:
+    async def filter(self, records: list) -> list:
         records_list = []
+        keywords = await self.load_filter_keywords()
         for record in records:
             # 1.去除空消息 2.过滤指令"今日群聊" 3.去除机器人id
             if (record.plain_text != "" and 
                 record.session.id1 not in self.plugin_config.exclude_user_list and 
-                all(keyword not in record.plain_text for keyword in self.load_filter_keywords())):
+                all(keyword not in record.plain_text for keyword in keywords)):
                 records_str = f"{record.plain_text}"
                 records_list.append(records_str)
         records_merged = '\n'.join(records_list)
