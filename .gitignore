@@ -1,6 +1,5 @@
 .venv
 accounts
-config
 nonebot-plugin-gpt3/*
 .env-test
 __pycache__
