@@ -35,6 +35,6 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
     if records_merged == "":
         await matcher.send("没有足够的数据")
     else:
-        ai_summary = await summary.get_ai_message_res(records_merged)
         await matcher.send(len(records_merged))
+        ai_summary = await summary.get_ai_message_res(records_merged)
         await matcher.send(str(ai_summary))
