@@ -1,6 +1,5 @@
-import json
 from openai import OpenAI
-
+from openai.types.chat.chat_completion import ChatCompletion
 
 class Summary:
     def __init__(self, plugin_config):
@@ -10,10 +9,18 @@ class Summary:
         )
         self.plugin_config = plugin_config
 
-    async def get_ai_message_res(self, message: str) -> str:
+    async def get_ai_message_res(self, message: str) -> ChatCompletion:
+        """异步获取AI回复消息的结果。
+
+        参数:
+        message (str): 需要AI进行响应的用户消息文本。
+
+        返回值:
+        ChatCompletion: AI生成的聊天回复内容。
+        """
         content = "如下是一段多个用户参与的聊天记录，换行符'\n'代表一条消息的终结，请提取有意义的词句，总结这段聊天记录,字数在300字以内:" + message
         # content_list = await self.content_cutting(content)
-        completion = self.client.chat.completions.create(
+        response = self.client.chat.completions.create(
             model="Llama3-Chinese-8B-Instruct",
             messages=[
                 {"role": "user", "content": content}
@@ -21,9 +28,7 @@ class Summary:
             temperature=0.3,
             stream=False
         )
-        # 获取ai总结的结果
-        completion = completion.choices[0].message.content
-        return completion
+        return response
 
     async def load_filter_keywords(self) -> list:
         filepath = self.plugin_config.keywords_file_path

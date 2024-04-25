@@ -37,5 +37,9 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
     else:
         total_length = sum(len(word) for word in records_merged)
         await matcher.send(f"message length : {total_length}")
-        ai_summary = await summary.get_ai_message_res(records_merged)
+        response = await summary.get_ai_message_res(records_merged)
+        used_token=response.usage
+        ai_summary=response.choices[0].message.content
         await matcher.send(str(ai_summary))
+        await matcher.send(f"used token:{used_token}")
+
