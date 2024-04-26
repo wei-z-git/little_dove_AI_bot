@@ -21,7 +21,7 @@ class Summary:
         content = "如下是一段多个用户参与的聊天记录，换行符'\n'代表一条消息的终结，请提取有意义的词句，总结这段聊天记录,字数在300字以内:" + message
         # content_list = await self.content_cutting(content)
         response = self.client.chat.completions.create(
-            model="Llama3-Chinese-8B-Instruct",
+            model="Atom-13B-Chat",
             messages=[
                 {"role": "user", "content": content}
             ],
