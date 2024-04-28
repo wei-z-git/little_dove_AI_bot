@@ -46,7 +46,7 @@ class Summary:
         - records: 待过滤消息
 
         Returns:
-        - 已过滤消息,一坨str，用换行符隔开
+        - 已过滤消息,一坨str, 用换行符隔开
         """
         records_list = []
         keywords = await self.load_filter_keywords()

@@ -8,7 +8,6 @@ from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent
 from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
-from nonebot.log import logger
 from nonebot.exception import ActionFailed
 from nonebot_plugin_chatrecorder import get_message_records
 from nonebot_plugin_session import extract_session, SessionIdType
@@ -34,11 +33,12 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
         time_start=datetime.now() - timedelta(days=1),
     )
     summary = Summary(plugin_config)
-    records_merged = await summary.filter(records)
+    records_merged = await summary.message_handle(records)
+    total_length = sum(len(word) for word in records_merged)
     if records_merged == "":
         await matcher.send("没有足够的数据")
     else:
-        total_length = sum(len(word) for word in records_merged)
+
         await matcher.send(f"message length : {total_length}")
         response = await summary.get_ai_message_res(records_merged)
         used_token=response.usage
