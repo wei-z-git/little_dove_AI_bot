@@ -33,18 +33,21 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
         time_start=datetime.now() - timedelta(days=1),
     )
     summary = Summary(plugin_config)
-    records_merged = await summary.message_handle(records)
-    total_length = sum(len(word) for word in records_merged)
-    if records_merged == "":
+    records_merged_list = await summary.message_handle(records)
+    total_length = sum(len(word) for word in records_merged_list)
+    if records_merged_list == "":
         await matcher.send("没有足够的数据")
     else:
-
+        ai_summarization = ""
         await matcher.send(f"message length : {total_length}")
-        response = await summary.get_ai_message_res(records_merged)
-        used_token=response.usage
-        ai_summary=response.choices[0].message.content
-        await matcher.send(str(ai_summary))
-        await matcher.send(f"used token:{used_token}")
+        for record in records_merged_list:
+            response = await summary.get_ai_message_res(record)
+            ai_summary=response.choices[0].message.content
+            ai_summarization=ai_summary+"\n===分割===\n"
+            used_token=response.usage
+            await matcher.send(f"used token:{used_token}")
+        await matcher.send(str(ai_summarization))
+
 
 @matcher_summary_half_day.handle()
 async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
@@ -55,13 +58,13 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
         time_start=datetime.now() - timedelta(days=0.5),
     )
     summary = Summary(plugin_config)
-    records_merged = await summary.message_handle(records)
-    if records_merged == "":
+    records_merged_list = await summary.message_handle(records)
+    if records_merged_list == "":
         await matcher.send("没有足够的数据")
     else:
-        total_length = sum(len(word) for word in records_merged)
+        total_length = sum(len(word) for word in records_merged_list)
         await matcher.send(f"message length : {total_length}")
-        response = await summary.get_ai_message_res(records_merged)
+        response = await summary.get_ai_message_res(records_merged_list)
         used_token=response.usage
         ai_summary=response.choices[0].message.content
         await matcher.send(str(ai_summary))
