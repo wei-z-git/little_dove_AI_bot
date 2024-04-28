@@ -55,7 +55,7 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
         time_start=datetime.now() - timedelta(days=0.5),
     )
     summary = Summary(plugin_config)
-    records_merged = await summary.filter(records)
+    records_merged = await summary.message_handle(records)
     if records_merged == "":
         await matcher.send("没有足够的数据")
     else:
