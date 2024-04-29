@@ -39,14 +39,16 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
         await matcher.send("没有足够的数据")
     else:
         ai_summarization = ""
+        used_tokens=""
         await matcher.send(f"message length : {total_length}")
         for record in records_merged_list:
             response = await summary.get_ai_message_res(record)
             ai_summary=response.choices[0].message.content
-            ai_summarization=ai_summary+"\n===分割===\n"
+            ai_summarization=ai_summarization+"\n===分割===\n"+ai_summary
             used_token=response.usage
-            await matcher.send(f"used token:{used_token}")
+            used_tokens=used_tokens+str(used_token)
         await matcher.send(str(ai_summarization))
+        await matcher.send(f"used token:{used_token}")
 
 
 @matcher_summary_half_day.handle()
