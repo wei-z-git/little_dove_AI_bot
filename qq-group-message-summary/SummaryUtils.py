@@ -60,8 +60,9 @@ class Summary:
         records_merged = '\n'.join(records_list)
         return records_merged
 
-    async def content_cutting(self, content: list,max_byte_size:int) -> list:
-        '''将content以3000字符为单位, 分割为list
+    async def content_cutting(self, content: str,max_byte_size:int) -> list:
+        '''将content以max_byte_size字符为单位, 分割为list,
+        长度使用utf-8编码计算
         '''
         num_chunks = (len(content.encode('utf-8')) // max_byte_size) + 1
         max_chunk_size = len(content) // num_chunks
@@ -79,5 +80,5 @@ class Summary:
         """处理消息,先过滤，然后再切割
         """
         content_filter = await self.filter(records)
-        content_cut = await self.content_cutting(content_filter,max_byte_size=4500)
+        content_cut = await self.content_cutting(content_filter,max_byte_size=3000)
         return content_cut
