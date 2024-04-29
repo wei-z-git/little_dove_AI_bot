@@ -33,6 +33,7 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
         time_start=datetime.now() - timedelta(days=1),
     )
     summary = Summary(plugin_config)
+    # 将record过滤然后切割为以4500为边界的list
     records_merged_list = await summary.message_handle(records)
     total_length = sum(len(word) for word in records_merged_list)
     if records_merged_list == "":
@@ -40,13 +41,15 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
     else:
         ai_summarization = ""
         used_tokens=""
-        await matcher.send(f"message length : {total_length}")
+        await matcher.send(f"message length : {total_length} slices count:{len(records_merged_list)}")
+        # 逐段生成ai总结
         for record in records_merged_list:
             response = await summary.get_ai_message_res(record)
             ai_summary=response.choices[0].message.content
             ai_summarization=ai_summarization+"\n===分割===\n"+ai_summary
             used_token=response.usage
             used_tokens=used_tokens+str(used_token)
+            print(f"Staging Completed!")
         print("message received!!!")
         print(f"ai message length: {len(str(ai_summarization))}")
         ai_summarization_cut=await summary.content_cutting(ai_summarization,max_byte_size=3000)
