@@ -49,7 +49,9 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
             used_tokens=used_tokens+str(used_token)
         print("message received!!!")
         print(f"ai message length: {len(str(ai_summarization))}")
-        await matcher.send(str(ai_summarization))
+        ai_summarization_cut=await summary.content_cutting(ai_summarization,max_byte_size=3000)
+        for record in ai_summarization_cut:
+            await matcher.send(str(record))
         await matcher.send(f"used token:{used_token}")
 
 
