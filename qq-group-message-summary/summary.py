@@ -11,7 +11,7 @@ from nonebot.permission import SUPERUSER
 from nonebot.exception import ActionFailed
 from nonebot_plugin_chatrecorder import get_message_records
 from nonebot_plugin_session import extract_session, SessionIdType
-
+import zoneinfo
 
 # matchers
 matcher_summary = on_command(
@@ -27,10 +27,12 @@ matcher_product_test = on_command(
 @matcher_summary.handle()
 async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
     session = extract_session(bot, event)
+    beijing_tz = zoneinfo.ZoneInfo("Asia/Shanghai")
     records = await get_message_records(
         session=session,
         id_type=SessionIdType.GROUP,
-        time_start=datetime.now() - timedelta(days=1),
+        time_start=datetime.now(beijing_tz).replace(hour=0),
+        time_stop=datetime.now(beijing_tz).replace(hour=22),
     )
     summary = Summary(plugin_config)
     # 将record过滤然后切割为以4500为边界的list
@@ -41,7 +43,7 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
     else:
         ai_summarization = ""
         used_tokens=""
-        # await matcher.send(f"message length(utf-8) : {total_length} slices count:{len(records_merged_list)}")
+        await matcher.send(f"message length(utf-8) : {total_length} slices count:{len(records_merged_list)}")
         # 逐段生成ai总结
         for record in records_merged_list:
             response = await summary.get_ai_message_res(record)
