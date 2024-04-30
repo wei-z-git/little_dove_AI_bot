@@ -57,7 +57,7 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
         ai_summarization_cut=await summary.content_cutting(ai_summarization,max_byte_size=10000)
         for record in ai_summarization_cut:
             await matcher.send(str(record))
-        await matcher.send(f"used token:{used_token}")
+        print(f"used tokens:{used_tokens}")
 
 
 @matcher_summary_half_day.handle()
