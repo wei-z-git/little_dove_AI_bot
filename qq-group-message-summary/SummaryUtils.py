@@ -1,14 +1,37 @@
 from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
+import zoneinfo
+from nonebot_plugin_chatrecorder import get_message_records
+from nonebot_plugin_session import SessionIdType
+from datetime import datetime, timedelta
+from nonebot_plugin_chatrecorder import MessageRecord
 
 
 class Summary:
-    def __init__(self, plugin_config):
+    """获取聊天记录，并生成聊天摘要
+    """
+
+    async def __init__(self, plugin_config, session):
         self.client = OpenAI(
             api_key=plugin_config.ai_secret_key,
             base_url="https://api.atomecho.cn/v1",
         )
         self.plugin_config = plugin_config
+        self.session = session
+
+    async def get_session_message(self) -> list[MessageRecord]:
+        """获取消息记录
+        返回值:
+        * ``List[MessageRecord]``: 消息记录列表
+        """
+        beijing_tz = zoneinfo.ZoneInfo("Asia/Shanghai")
+        records = await get_message_records(
+            session=self.session,
+            id_type=SessionIdType.GROUP,
+            time_start=datetime.now(beijing_tz).replace(hour=0),
+            time_stop=datetime.now(beijing_tz).replace(hour=22),
+        )
+        return records
 
     async def get_ai_message_res(self, message: str) -> ChatCompletion:
         """异步获取AI回复消息的结果。
@@ -32,6 +55,10 @@ class Summary:
         return response
 
     async def load_filter_keywords(self) -> list:
+        """加载过滤关键词
+        `    返回值:
+        * ``List[str]``: 过滤关键词列表
+        """
         filepath = self.plugin_config.keywords_file_path
         with open(filepath, 'r', encoding='utf-8') as file:
             keywords = file.readlines()
@@ -60,7 +87,7 @@ class Summary:
         records_merged = '\n'.join(records_list)
         return records_merged
 
-    async def content_cutting(self, content: str,max_byte_size:int) -> list:
+    async def content_cutting(self, content: str, max_byte_size: int) -> list:
         '''将content以max_byte_size字符为单位, 分割为list,
         长度使用utf-8编码计算
         '''
@@ -76,9 +103,31 @@ class Summary:
             chunks_list.append(current_chunk)
         return chunks_list
 
-    async def message_handle(self, records: list) -> list:
-        """处理消息,先过滤，然后再切割
+    async def get_length(self) -> str:
+        """获取过滤后消息总长度
         """
-        content_filter = await self.filter(records)
-        content_cut = await self.content_cutting(content_filter,max_byte_size=3000)
+        records_merged_list = self._message_handle()
+        total_length = sum(len(word.encode('utf-8'))
+                           for word in records_merged_list)
+        return total_length
+
+    async def _message_handle(self) -> list:
+        """处理消息,先过滤，然后再切割,获得切割后的消息list
+        """
+        record = await self.get_session_message()
+        content_filter = await self.filter(record)
+        content_cut = await self.content_cutting(content_filter, max_byte_size=3000)
         return content_cut
+    async def generate_ai_message(self) -> str:
+        """逐段生成ai总结，并计算token
+        """
+        records_merged_list = self._message_handle()
+        for record in records_merged_list:
+            response = await self.get_ai_message_res(record)
+            ai_summary=response.choices[0].message.content
+            ai_summarization=ai_summarization+"\n===分割===\n"+ai_summary
+            used_token=response.usage
+            used_tokens=used_tokens+str(used_token)
+            print(f"Staging Completed!")
+        return ai_summarization,used_tokens
+

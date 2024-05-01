@@ -9,9 +9,7 @@ from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
 from nonebot.exception import ActionFailed
-from nonebot_plugin_chatrecorder import get_message_records
-from nonebot_plugin_session import extract_session, SessionIdType
-import zoneinfo
+from nonebot_plugin_session import extract_session
 
 # matchers
 matcher_summary = on_command(
@@ -26,19 +24,14 @@ matcher_product_test = on_command(
 
 @matcher_summary.handle()
 async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
-    session = extract_session(bot, event)
-    beijing_tz = zoneinfo.ZoneInfo("Asia/Shanghai")
-    records = await get_message_records(
-        session=session,
-        id_type=SessionIdType.GROUP,
-        time_start=datetime.now(beijing_tz).replace(hour=0),
-        time_stop=datetime.now(beijing_tz).replace(hour=22),
-    )
-    summary = Summary(plugin_config)
+    summary = Summary(plugin_config,session=extract_session(bot, event))
+
+    
     # 将record过滤然后切割为以4500为边界的list
-    records_merged_list = await summary.message_handle(records)
-    total_length = sum(len(word.encode('utf-8')) for word in records_merged_list)
-    if records_merged_list == "":
+    # records_merged_list = await summary.message_handle(records)
+    # total_length = sum(len(word.encode('utf-8')) for word in records_merged_list)
+    total_length=summary.get_length()
+    if total_length == 0:
         await matcher.send("没有足够的数据")
     else:
         ai_summarization = ""
