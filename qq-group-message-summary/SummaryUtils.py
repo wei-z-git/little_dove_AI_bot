@@ -18,6 +18,7 @@ class Summary:
         )
         self.plugin_config = plugin_config
         self.session = session
+# Get session records:
 
     async def get_session_message(self) -> list[MessageRecord]:
         """获取消息记录
@@ -33,6 +34,7 @@ class Summary:
         )
         return records
 
+# get ai message:
     async def get_ai_message_res(self, message: str) -> ChatCompletion:
         """异步获取AI回复消息的结果。
 
@@ -43,7 +45,7 @@ class Summary:
         ChatCompletion: AI生成的聊天回复内容。
         """
         content = "如下是一段多个用户参与的聊天记录，换行符'\n'代表一条消息的终结，请提取有意义的词句，总结这段聊天记录,字数在300字以内:" + message
-        # content_list = await self.content_cutting(content)
+        # content_list = await self._content_cutting(content)
         response = self.client.chat.completions.create(
             model="Llama3-Chinese-8B-Instruct",
             messages=[
@@ -54,7 +56,23 @@ class Summary:
         )
         return response
 
-    async def load_filter_keywords(self) -> list:
+    async def _generate_ai_message(self, content_cut_origin_record) -> str:
+        """逐段生成ai总结，并计算token
+        """
+        ai_summarization = ""
+        used_tokens = ""
+        for record in content_cut_origin_record:
+            response = await self.get_ai_message_res(record)
+            ai_summary = response.choices[0].message.content
+            ai_summarization = ai_summarization+"\n===分割===\n"+ai_summary
+            used_token = response.usage
+            used_tokens = used_tokens+str(used_token)
+            print(f"Staging Completed!")
+        return ai_summarization, used_tokens
+
+
+# Filters:
+    async def _load_filter_keywords(self) -> list:
         """加载过滤关键词
         `    返回值:
         * ``List[str]``: 过滤关键词列表
@@ -68,15 +86,14 @@ class Summary:
 
     async def filter(self, records: list) -> str:
         """过滤消息
-
         Parameters:
-        - records: 待过滤消息
+        - records: 待过滤消息，nonebot聊天记录
 
         Returns:
         - 已过滤消息,一坨str, 用换行符隔开
         """
         records_list = []
-        keywords = await self.load_filter_keywords()
+        keywords = await self._load_filter_keywords()
         for record in records:
             # 1.去除空消息 2.过滤指令"今日群聊" 3.去除机器人id
             if (record.plain_text != "" and
@@ -86,8 +103,9 @@ class Summary:
                 records_list.append(records_str)
         records_merged = '\n'.join(records_list)
         return records_merged
-
-    async def content_cutting(self, content: str, max_byte_size: int) -> list:
+    
+# Content cutting:
+    async def _content_cutting(self, content: str, max_byte_size: int) -> list:
         '''将content以max_byte_size字符为单位, 分割为list,
         长度使用utf-8编码计算
         '''
@@ -111,23 +129,19 @@ class Summary:
                            for word in records_merged_list)
         return total_length
 
-    async def _message_handle(self) -> list:
-        """处理消息,先过滤，然后再切割,获得切割后的消息list
+    async def _message_handle(self) -> tuple[list[str], str]:
+        """1、处理原始消息,先过滤，
+        2、然后再切割,获得切割后的消息list
+        3、将切割后的消息逐段丢给ai, 并将返回结果拼起来
+        4、ai结果切割
         """
         record = await self.get_session_message()
         content_filter = await self.filter(record)
-        content_cut = await self.content_cutting(content_filter, max_byte_size=3000)
-        return content_cut
-    async def generate_ai_message(self) -> str:
-        """逐段生成ai总结，并计算token
-        """
-        records_merged_list = self._message_handle()
-        for record in records_merged_list:
-            response = await self.get_ai_message_res(record)
-            ai_summary=response.choices[0].message.content
-            ai_summarization=ai_summarization+"\n===分割===\n"+ai_summary
-            used_token=response.usage
-            used_tokens=used_tokens+str(used_token)
-            print(f"Staging Completed!")
-        return ai_summarization,used_tokens
+        content_cut_origin_record = await self._content_cutting(content_filter, max_byte_size=3000)
+        # 3、生成并拼接ai总结
+        ai_summarization, used_tokens = self._generate_ai_message(
+            content_cut_origin_record)
+        # 4、ai结果切割
+        ai_summarization_cut = await self._content_cutting(ai_summarization, max_byte_size=10000)
 
+        return ai_summarization_cut, used_tokens

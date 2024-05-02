@@ -34,19 +34,11 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
     if total_length == 0:
         await matcher.send("没有足够的数据")
     else:
-        ai_summarization = ""
-        used_tokens=""
-        await matcher.send(f"message length(utf-8) : {total_length} slices count:{len(records_merged_list)}")
+        ai_summarization_cut, used_tokens=summary._message_handle()
+        await matcher.send(f"message length(utf-8) : {total_length} slices count:{len(ai_summarization_cut)}")
         # 逐段生成ai总结
-        for record in records_merged_list:
-            response = await summary.get_ai_message_res(record)
-            ai_summary=response.choices[0].message.content
-            ai_summarization=ai_summarization+"\n===分割===\n"+ai_summary
-            used_token=response.usage
-            used_tokens=used_tokens+str(used_token)
-            print(f"Staging Completed!")
-        print("message received!!!")
-        print(f"ai message length: {len(str(ai_summarization))}")
+        # print("message received!!!")
+        # print(f"ai message length: {len(str(ai_summarization))}")
         ai_summarization_cut=await summary.content_cutting(ai_summarization,max_byte_size=10000)
         for record in ai_summarization_cut:
             await matcher.send(str(record))
