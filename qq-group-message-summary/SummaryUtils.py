@@ -124,12 +124,12 @@ class Summary:
     async def get_length(self) -> str:
         """获取过滤后消息总长度
         """
-        records_merged_list = self._message_handle()
+        records_merged_list = self.message_handle()
         total_length = sum(len(word.encode('utf-8'))
                            for word in records_merged_list)
         return total_length
 
-    async def _message_handle(self) -> tuple[list[str], str]:
+    async def message_handle(self) -> tuple[list[str], str]:
         """1、处理原始消息,先过滤，
         2、然后再切割,获得切割后的消息list
         3、将切割后的消息逐段丢给ai, 并将返回结果拼起来
