@@ -4,14 +4,13 @@ import zoneinfo
 from nonebot_plugin_chatrecorder import get_message_records
 from nonebot_plugin_session import SessionIdType
 from datetime import datetime, timedelta
-from nonebot_plugin_chatrecorder import MessageRecord
 
 
 class Summary:
     """获取聊天记录，并生成聊天摘要
     """
 
-    async def __init__(self, plugin_config, session):
+    def __init__(self, plugin_config, session):
         self.client = OpenAI(
             api_key=plugin_config.ai_secret_key,
             base_url="https://api.atomecho.cn/v1",
@@ -20,10 +19,10 @@ class Summary:
         self.session = session
 # Get session records:
 
-    async def get_session_message(self) -> list[MessageRecord]:
+    async def get_session_message(self) -> list:
         """获取消息记录
         返回值:
-        * ``List[MessageRecord]``: 消息记录列表
+        * ``List``: 消息记录列表
         """
         beijing_tz = zoneinfo.ZoneInfo("Asia/Shanghai")
         records = await get_message_records(
@@ -72,6 +71,8 @@ class Summary:
 
 
 # Filters:
+
+
     async def _load_filter_keywords(self) -> list:
         """加载过滤关键词
         `    返回值:
@@ -103,7 +104,7 @@ class Summary:
                 records_list.append(records_str)
         records_merged = '\n'.join(records_list)
         return records_merged
-    
+
 # Content cutting:
     async def _content_cutting(self, content: str, max_byte_size: int) -> list:
         '''将content以max_byte_size字符为单位, 分割为list,
@@ -124,9 +125,9 @@ class Summary:
     async def get_length(self) -> str:
         """获取过滤后消息总长度
         """
-        records_merged_list = self.message_handle()
+        ai_summarization_cut, used_tokens = await self.message_handle()
         total_length = sum(len(word.encode('utf-8'))
-                           for word in records_merged_list)
+                           for word in ai_summarization_cut)
         return total_length
 
     async def message_handle(self) -> tuple[list[str], str]:
@@ -139,7 +140,7 @@ class Summary:
         content_filter = await self.filter(record)
         content_cut_origin_record = await self._content_cutting(content_filter, max_byte_size=3000)
         # 3、生成并拼接ai总结
-        ai_summarization, used_tokens = self._generate_ai_message(
+        ai_summarization, used_tokens = await self._generate_ai_message(
             content_cut_origin_record)
         # 4、ai结果切割
         ai_summarization_cut = await self._content_cutting(ai_summarization, max_byte_size=10000)
