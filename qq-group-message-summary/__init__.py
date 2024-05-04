@@ -5,7 +5,7 @@ from .config import Config
 
 
 from . import (
-    summary,
+    summary,scheduler
 )
 
 __plugin_meta__ = PluginMetadata(

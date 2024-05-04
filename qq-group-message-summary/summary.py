@@ -21,20 +21,24 @@ matcher_summary = on_command(
 matcher_product_test = on_command(
     'test', priority=3, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
- 
-@matcher_summary.handle()
-async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
-    summary = Summary(plugin_config,session=extract_session(bot, event))
-    total_length=await summary.get_length()
-    if total_length == 0:
-        await matcher.send("没有足够的数据")
-    else:
+
+async def send_ai_message(matcher: Matcher, bot: Bot,event: GroupMessageEvent):
+    '''生成并逐段发送ai消息
+    '''
+    try:
+        summary = Summary(plugin_config,session=extract_session(bot, event))
+        total_length=await summary.get_length()
         ai_summarization_cut, used_tokens=await summary.message_handle()
-        
         await matcher.send(f"message length(utf-8) : {total_length} slices count:{len(ai_summarization_cut)}")
         for record in ai_summarization_cut:
             await matcher.send(str(record))
         print(f"used tokens:{used_tokens}")
+    except ActionFailed:
+        await matcher.send("执行失败了捏,请输入ac")
+
+@matcher_summary.handle()
+async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
+    await send_ai_message(matcher,bot,event)
 
 
 # @matcher_summary_half_day.handle()
