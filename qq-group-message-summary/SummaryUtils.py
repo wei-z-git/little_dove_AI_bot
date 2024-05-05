@@ -1,8 +1,7 @@
 from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
 import zoneinfo
-from nonebot_plugin_chatrecorder import get_message_records
-from nonebot_plugin_session import SessionIdType
+from nonebot_plugin_chatrecorder import get_messages_plain_text
 from datetime import datetime, timedelta
 
 
@@ -10,24 +9,26 @@ class Summary:
     """获取聊天记录，并生成聊天摘要
     """
 
-    def __init__(self, plugin_config, session):
+    def __init__(self, plugin_config, qq_group_id):
         self.client = OpenAI(
             api_key=plugin_config.ai_secret_key,
             base_url="https://api.atomecho.cn/v1",
         )
-        self.plugin_config = plugin_config
-        self.session = session
-# Get session records:
+        self.keywords_file_path = plugin_config.keywords_file_path
+        self.exclude_id1s=plugin_config.exclude_user_list
+        self.qq_group_id = qq_group_id
+# Get records:
 
-    async def get_session_message(self) -> list:
+    async def _get_message(self) -> list:
         """获取消息记录
         返回值:
         * ``List``: 消息记录列表
         """
         beijing_tz = zoneinfo.ZoneInfo("Asia/Shanghai")
-        records = await get_message_records(
-            session=self.session,
-            id_type=SessionIdType.GROUP,
+        exclude_id1s=self.exclude_id1s
+        records = await get_messages_plain_text(
+            exclude_id1s=exclude_id1s,
+            id2s=[self.qq_group_id],
             time_start=datetime.now(beijing_tz).replace(hour=0),
             time_stop=datetime.now(beijing_tz).replace(hour=22),
         )
@@ -72,13 +73,12 @@ class Summary:
 
 # Filters:
 
-
     async def _load_filter_keywords(self) -> list:
         """加载过滤关键词
         `    返回值:
         * ``List[str]``: 过滤关键词列表
         """
-        filepath = self.plugin_config.keywords_file_path
+        filepath = self.keywords_file_path
         with open(filepath, 'r', encoding='utf-8') as file:
             keywords = file.readlines()
         # 移除每个关键词末尾的换行符
@@ -96,11 +96,10 @@ class Summary:
         records_list = []
         keywords = await self._load_filter_keywords()
         for record in records:
-            # 1.去除空消息 2.过滤指令"今日群聊" 3.去除机器人id
-            if (record.plain_text != "" and
-                int(record.session.id1) not in self.plugin_config.exclude_user_list and
-                    all(keyword not in record.plain_text for keyword in keywords)):
-                records_str = f"{record.plain_text}"
+            # 1.去除空消息 2.过滤关键词
+            if (record != "" and
+                    all(keyword not in record for keyword in keywords)):
+                records_str = f"{record}"
                 records_list.append(records_str)
         records_merged = '\n'.join(records_list)
         return records_merged
@@ -136,13 +135,18 @@ class Summary:
         3、将切割后的消息逐段丢给ai, 并将返回结果拼起来
         4、ai结果切割
         """
-        record = await self.get_session_message()
+        record = await self._get_message()
         content_filter = await self.filter(record)
         content_cut_origin_record = await self._content_cutting(content_filter, max_byte_size=3000)
         # 3、生成并拼接ai总结
-        ai_summarization, used_tokens = await self._generate_ai_message(
-            content_cut_origin_record)
-        # 4、ai结果切割
-        ai_summarization_cut = await self._content_cutting(ai_summarization, max_byte_size=10000)
-
+        # 如果content_cut_origin_record为空,则返回数据不足
+        if content_cut_origin_record == [""]:
+            ai_summarization_cut=["数据不足"]
+            used_tokens="数据不足"
+        else :
+            ai_summarization, used_tokens = await self._generate_ai_message(
+                content_cut_origin_record)
+            # 4、ai结果切割
+            ai_summarization_cut = await self._content_cutting(ai_summarization, max_byte_size=10000)
+    
         return ai_summarization_cut, used_tokens
