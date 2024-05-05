@@ -1,6 +1,8 @@
 from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
 import zoneinfo
+from nonebot import require
+require("nonebot_plugin_chatrecorder")
 from nonebot_plugin_chatrecorder import get_messages_plain_text
 from datetime import datetime, timedelta
 
