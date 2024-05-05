@@ -69,11 +69,13 @@ CHATGPT-plugin: https://github.com/A-kirami/nonebot-plugin-chatgpt
 
 - [X] 接入~~文心一言~~ llama3
 - [X] 过滤测试指令（关键词）
-- [ ] 消息切割（2000字符）
+- [X] 消息切割（2000字符）
 - [ ] 定时发送
 - [ ] 指令/显示消息长度
 - [ ] 指令/修改prompt
 - [ ] 指令/详尽模式: 更加详细的总结
+- [ ] get_message可以指定排除用户id，不需要额外过滤方法
+- [ ] 通过get_message指定群
 
 ---
 
