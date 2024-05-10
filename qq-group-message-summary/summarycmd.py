@@ -30,7 +30,7 @@ async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
         summary = Summary(plugin_config, qq_group_id=gid)
         total_length = await summary.get_length()
         ai_summarization_cut, used_tokens = await summary.message_handle()
-        await matcher.send(f"message length(utf-8) : {total_length} slices count:{len(ai_summarization_cut)}")
+        # await matcher.send(f"message length(utf-8) : {total_length} slices count:{len(ai_summarization_cut)}")
         for record in ai_summarization_cut:
             await matcher.send(str(record))
         print(f"used tokens:{used_tokens}")
