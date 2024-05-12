@@ -23,7 +23,7 @@ matcher_product_test = on_command(
     'test', priority=3, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
 
-async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent, prompt: str = "请提取有意义的词句，总结这段聊天记录,"):
+async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent, prompt: str = "字数在300字以内"):
     '''生成并逐段发送ai消息
     '''
     try:

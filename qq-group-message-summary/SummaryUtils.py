@@ -47,7 +47,7 @@ class Summary:
         返回值:
         ChatCompletion: AI生成的聊天回复内容。
         """
-        content = "如下是一段多个用户参与的聊天记录，"+self.prompt + message
+        content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，总结这段聊天记录,"+self.prompt + message
         # content_list = await self._content_cutting(content)
         response = self.client.chat.completions.create(
             model="Llama3-Chinese-8B-Instruct",
