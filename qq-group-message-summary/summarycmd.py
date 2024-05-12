@@ -44,7 +44,10 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
     await send_ai_message(matcher, bot, event)
 
 
-question = "洒家来啦，请哥哥请输入prompt,(default：请提取有意义的词句，总结这段聊天记录,)"
+question = f"""洒家来啦，请哥哥请输入prompt~❤
+---💞消息来自爱好物理催眠🔨的小鸠Joe猛男机器人💘-战锤版
+(Default：请提取有意义的词句，总结这段聊天记录,)
+"""
 
 @matcher_summary_pro.got("prompt", prompt=question)
 async def call_robot(bot: Bot, event: GroupMessageEvent, matcher: Matcher, prompt: str = ArgPlainText()):
