@@ -9,25 +9,26 @@ from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
 from nonebot.exception import ActionFailed
+from nonebot.params import ArgPlainText
 
 
 # matchers
 matcher_summary = on_command(
     '今日群聊', priority=3, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
-# matcher_summary_half_day = on_command(
-#     '半天群聊', priority=2, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
+matcher_summary_pro = on_command(
+    '今日群聊pro', priority=2, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
 matcher_product_test = on_command(
     'test', priority=3, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
 
-async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
+async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent, prompt: str = "请提取有意义的词句，总结这段聊天记录,"):
     '''生成并逐段发送ai消息
     '''
     try:
         gid = int(event.group_id)
-        summary = Summary(plugin_config, qq_group_id=gid)
+        summary = Summary(plugin_config, qq_group_id=gid, prompt=prompt)
         total_length = await summary.get_length()
         ai_summarization_cut, used_tokens = await summary.message_handle()
         # await matcher.send(f"message length(utf-8) : {total_length} slices count:{len(ai_summarization_cut)}")
@@ -39,27 +40,12 @@ async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
 
 
 @matcher_summary.handle()
-async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
+async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
     await send_ai_message(matcher, bot, event)
 
 
-# @matcher_summary_half_day.handle()
-# async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent,):
-#     session = extract_session(bot, event)
-#     records = await get_message_records(
-#         session=session,
-#         id_type=SessionIdType.GROUP,
-#         time_start=datetime.now() - timedelta(days=0.5),
-#     )
-#     summary = Summary(plugin_config)
-#     records_merged_list = await summary.message_handle(records)
-#     if records_merged_list == "":
-#         await matcher.send("没有足够的数据")
-#     else:
-#         total_length = sum(len(word) for word in records_merged_list)
-#         await matcher.send(f"message length : {total_length}")
-#         response = await summary.get_ai_message_res(records_merged_list)
-#         used_token=response.usage
-#         ai_summary=response.choices[0].message.content
-#         await matcher.send(str(ai_summary))
-#         await matcher.send(f"used token:{used_token}")
+question = "洒家来啦，请哥哥请输入prompt,(default：请提取有意义的词句，总结这段聊天记录,)"
+
+@matcher_summary_pro.got("prompt", prompt=question)
+async def call_robot(bot: Bot, event: GroupMessageEvent, matcher: Matcher, prompt: str = ArgPlainText()):
+    await send_ai_message(matcher, bot, event, prompt)

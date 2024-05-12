@@ -77,6 +77,10 @@ CHATGPT-plugin: https://github.com/A-kirami/nonebot-plugin-chatgpt
 - [ ] get_message可以指定排除用户id，不需要额外过滤方法
 - [ ] 通过get_message指定群
 
+##### qqmesage summary pro
+
+今日群聊pro --> 请输入prompt
+
 ---
 
 ### Completed

@@ -11,14 +11,15 @@ class Summary:
     """获取聊天记录，并生成聊天摘要
     """
 
-    def __init__(self, plugin_config, qq_group_id):
+    def __init__(self, plugin_config, qq_group_id,prompt):
         self.client = OpenAI(
             api_key=plugin_config.ai_secret_key,
             base_url="https://api.atomecho.cn/v1",
         )
         self.keywords_file_path = plugin_config.keywords_file_path
-        self.exclude_id1s=plugin_config.exclude_user_list
+        self.exclude_id1s = plugin_config.exclude_user_list
         self.qq_group_id = qq_group_id
+        self.prompt = prompt
 # Get records:
 
     async def _get_message(self) -> list:
@@ -27,7 +28,7 @@ class Summary:
         * ``List``: 消息记录列表
         """
         beijing_tz = zoneinfo.ZoneInfo("Asia/Shanghai")
-        exclude_id1s=self.exclude_id1s
+        exclude_id1s = self.exclude_id1s
         records = await get_messages_plain_text(
             exclude_id1s=exclude_id1s,
             id2s=[self.qq_group_id],
@@ -46,7 +47,7 @@ class Summary:
         返回值:
         ChatCompletion: AI生成的聊天回复内容。
         """
-        content = "如下是一段多个用户参与的聊天记录，换行符'\n'代表一条消息的终结，请提取有意义的词句，总结这段聊天记录,字数在300字以内:" + message
+        content = "如下是一段多个用户参与的聊天记录，"+self.prompt + message
         # content_list = await self._content_cutting(content)
         response = self.client.chat.completions.create(
             model="Llama3-Chinese-8B-Instruct",
@@ -103,7 +104,7 @@ class Summary:
                     all(keyword not in record for keyword in keywords)):
                 records_str = f"{record}"
                 records_list.append(records_str)
-        records_merged = '\n'.join(records_list)
+        records_merged = '。'.join(records_list)
         return records_merged
 
 # Content cutting:
@@ -143,12 +144,12 @@ class Summary:
         # 3、生成并拼接ai总结
         # 如果content_cut_origin_record为空,则返回数据不足
         if content_cut_origin_record == [""]:
-            ai_summarization_cut=["数据不足"]
-            used_tokens="数据不足"
-        else :
+            ai_summarization_cut = ["数据不足"]
+            used_tokens = "数据不足"
+        else:
             ai_summarization, used_tokens = await self._generate_ai_message(
                 content_cut_origin_record)
             # 4、ai结果切割
             ai_summarization_cut = await self._content_cutting(ai_summarization, max_byte_size=10000)
-    
+
         return ai_summarization_cut, used_tokens
