@@ -23,7 +23,7 @@ matcher_product_test = on_command(
     'test', priority=3, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
 
-async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent, prompt: str = "字数在300字以内"):
+async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent, prompt: str = "总结这段聊天记录,字数在300字以内"):
     '''生成并逐段发送ai消息
     '''
     try:
@@ -46,7 +46,7 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
 
 question = f"""洒家来啦，请哥哥请输入prompt~❤
 ---💞消息来自爱好物理催眠🔨的小鸠Joe猛男机器人💘-战锤版
-(Default：请提取有意义的词句，总结这段聊天记录,)
+(Default：如下是多个用户参与的聊天记录,请提取有意义的词句，)
 """
 
 @matcher_summary_pro.got("prompt", prompt=question)
