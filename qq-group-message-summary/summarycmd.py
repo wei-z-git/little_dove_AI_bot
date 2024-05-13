@@ -19,8 +19,8 @@ matcher_summary = on_command(
 matcher_summary_pro = on_command(
     '今日群聊pro', priority=2, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
-matcher_product_test = on_command(
-    'test', priority=3, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
+matcher_ac = on_command(
+    'ac·堕', priority=3, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
 
 async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent, prompt: str = "总结这段聊天记录,字数在300字以内"):
@@ -49,6 +49,13 @@ question = f"""洒家来啦，请哥哥请输入prompt~❤
 (Default：如下是多个用户参与的聊天记录,请提取有意义的词句，)
 """
 
+
 @matcher_summary_pro.got("prompt", prompt=question)
 async def call_robot(bot: Bot, event: GroupMessageEvent, matcher: Matcher, prompt: str = ArgPlainText()):
+    await send_ai_message(matcher, bot, event, prompt)
+
+
+@matcher_ac.handle()
+async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
+    prompt = "并结合这些词句,对其他人说一句话,字数在10字以内,要求幽默风趣"
     await send_ai_message(matcher, bot, event, prompt)
