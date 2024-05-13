@@ -37,18 +37,15 @@ class Summary:
         )
         return records
 
-# get ai message:
-    async def get_ai_message_res(self, message: str) -> ChatCompletion:
-        """异步获取AI回复消息的结果。
+    async def get_ai_message_api(self,content) -> ChatCompletion:
+        """调用llama api,获取AI回复消息的结果。
 
         参数:
-        message (str): 需要AI进行响应的用户消息文本。
+        content (str): 需要AI进行响应的用户消息文本。
 
         返回值:
         ChatCompletion: AI生成的聊天回复内容。
         """
-        content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，"+self.prompt+":" + message
-        # content_list = await self._content_cutting(content)
         response = self.client.chat.completions.create(
             model="Llama3-Chinese-8B-Instruct",
             messages=[
@@ -58,7 +55,33 @@ class Summary:
             stream=False
         )
         return response
+    
+    async def get_ai_message_api_str(self,content) -> str:
+        """获取消息记录对象的内容, string
+        返回值:
+        * ``str``: 消息记录文本
+        """
+        response=self.get_ai_message_api(content)
+        return response.choices[0].message.content
+# get ai message:
+    async def get_ai_message_res(self, message: str,max_byte_size=1500) -> str:
+        """异步获取AI回复消息的结果
+        """
+        if len(message.encode('utf-8')) > max_byte_size:
+            message=self._resummarize_message(message)
+        content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句,"+self.prompt+":" + message
+        response = self.get_ai_message_api_str(content)
+        return response
+    async def _resummarize_message(self,message,max_byte_size=3000) -> str:
+        """将过长的消息进行重新总结为短消息
+        """
+        while len(message.encode('utf-8')) > max_byte_size:
+            content="如下是一段多个用户参与的聊天记录,请提取有意义的词句，总结为500字以内消息:"+message
+            message=self.get_ai_message_api_str(content)
+        return message
+        
 
+        pass
     async def _generate_ai_message(self, content_cut_origin_record) -> str:
         """逐段生成ai总结，并计算token
         """
@@ -80,7 +103,6 @@ class Summary:
             used_tokens = str(used_token)
             print(f"Staging Completed!")
         return ai_summarization, used_tokens
-
 
 # Filters:
 
