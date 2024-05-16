@@ -11,7 +11,7 @@ class Summary:
     """获取聊天记录，并生成聊天摘要
     """
 
-    def __init__(self, plugin_config, qq_group_id,prompt):
+    def __init__(self, plugin_config, qq_group_id, prompt):
         self.client = OpenAI(
             api_key=plugin_config.ai_secret_key,
             base_url="https://api.atomecho.cn/v1",
@@ -37,7 +37,7 @@ class Summary:
         )
         return records
 
-    async def get_ai_message_api(self,content) -> ChatCompletion:
+    async def get_ai_message_api(self, content) -> ChatCompletion:
         """调用llama api,获取AI回复消息的结果。
 
         参数:
@@ -55,33 +55,42 @@ class Summary:
             stream=False
         )
         return response
-    
-    async def get_ai_message_api_str(self,content) -> str:
+
+    async def get_ai_message_api_str(self, content) -> str:
         """获取消息记录对象的内容, string
         返回值:
         * ``str``: 消息记录文本
         """
-        response=self.get_ai_message_api(content)
+        response = self.get_ai_message_api(content)
         return response.choices[0].message.content
 # get ai message:
-    async def get_ai_message_res(self, message: str,max_byte_size=1500) -> str:
+
+    async def get_ai_message_res(self, message: str, max_byte_size=1500) -> str:
         """异步获取AI回复消息的结果
         """
         if len(message.encode('utf-8')) > max_byte_size:
-            message=self._resummarize_message(message)
+            message = self._resummarize_message(message)
         content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句,"+self.prompt+":" + message
         response = self.get_ai_message_api_str(content)
         return response
-    async def _resummarize_message(self,message,max_byte_size=3000) -> str:
-        """将过长的消息进行重新总结为短消息
-        """
-        while len(message.encode('utf-8')) > max_byte_size:
-            content="如下是一段多个用户参与的聊天记录,请提取有意义的词句，总结为500字以内消息:"+message
-            message=self.get_ai_message_api_str(content)
-        return message
-        
 
-        pass
+    async def _resummarize_message(self, message, max_byte_size=3000) -> str:
+        """将过长的消息进行重新总结为短消息
+        规则: 一个汉字占3个字节,ai输入不能超过3000bytes,所以
+        1.将list中每项信息压缩之1/2,
+        2.再合并起来为str A
+        3.判断A是否超过3000bytes,如果超过则继续压缩,直到符合
+        """
+        # 截取消息
+        content_list = self._content_cutting(message, max_byte_size=3000)
+        for content in content_list:
+            content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为500字以内消息:"+message
+            message = self.get_ai_message_api_str(content)
+        # while len(message.encode('utf-8')) > max_byte_size:
+        #     content="如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为500字以内消息:"+message
+        #     message=self.get_ai_message_api_str(content)
+        return message
+
     async def _generate_ai_message(self, content_cut_origin_record) -> str:
         """逐段生成ai总结，并计算token
         """
