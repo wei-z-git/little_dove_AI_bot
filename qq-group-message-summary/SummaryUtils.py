@@ -62,14 +62,14 @@ class Summary:
         返回值:
         * ``str``: 消息记录文本
         """
-        response = self.get_ai_response_api(content)
+        response = await self.get_ai_response_api(content)
         return response.choices[0].message.content
 # get ai message:
 
     async def get_ai_message_res(self, message: str, max_byte_size=3000) -> Tuple[str, str]:
         """异步获取AI回复消息的结果, 包含token和ai message
         """
-        message = self._resummarize_message(message, max_byte_size)
+        message = await self._resummarize_message(message, max_byte_size)
         content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句,"+self.prompt+":" + message
         response = await self.get_ai_response_api(content)
         ai_summarization = response.choices[0].message.content
@@ -86,10 +86,10 @@ class Summary:
         # 截取消息
         while True:
             message_combined = ""
-            content_list = self._content_cutting(message, max_byte_size=3000)
+            content_list = await self._content_cutting(message, max_byte_size=3000)
             for content in content_list:
                 content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为500字以内消息:"+message
-                message_ai = self.get_ai_response_api_message_str(content)
+                message_ai = await self.get_ai_response_api_message_str(content)
                 message_combined = message_ai + "\n" + message_combined
             if len(message_combined.encode('utf-8')) <= max_byte_size:
                 break
