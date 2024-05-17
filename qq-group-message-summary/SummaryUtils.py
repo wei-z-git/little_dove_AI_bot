@@ -4,7 +4,8 @@ import zoneinfo
 from nonebot import require
 require("nonebot_plugin_chatrecorder")
 from nonebot_plugin_chatrecorder import get_messages_plain_text
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Tuple
 
 
 class Summary:
@@ -22,7 +23,7 @@ class Summary:
         self.prompt = prompt
 # Get records:
 
-    async def _get_message(self) -> list:
+    async def _get_record(self) -> list:
         """获取消息记录
         返回值:
         * ``List``: 消息记录列表
@@ -37,7 +38,7 @@ class Summary:
         )
         return records
 
-    async def get_ai_message_api(self, content) -> ChatCompletion:
+    async def get_ai_response_api(self, content) -> ChatCompletion:
         """调用llama api,获取AI回复消息的结果。
 
         参数:
@@ -56,62 +57,45 @@ class Summary:
         )
         return response
 
-    async def get_ai_message_api_str(self, content) -> str:
+    async def get_ai_response_api_message_str(self, content) -> str:
         """获取消息记录对象的内容, string
         返回值:
         * ``str``: 消息记录文本
         """
-        response = self.get_ai_message_api(content)
+        response = self.get_ai_response_api(content)
         return response.choices[0].message.content
 # get ai message:
 
-    async def get_ai_message_res(self, message: str, max_byte_size=1500) -> str:
-        """异步获取AI回复消息的结果
+    async def get_ai_message_res(self, message: str, max_byte_size=3000) -> Tuple[str, str]:
+        """异步获取AI回复消息的结果, 包含token和ai message
         """
-        if len(message.encode('utf-8')) > max_byte_size:
-            message = self._resummarize_message(message)
+        message = self._resummarize_message(message, max_byte_size)
         content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句,"+self.prompt+":" + message
-        response = self.get_ai_message_api_str(content)
-        return response
+        response = await self.get_ai_response_api(content)
+        ai_summarization = response.choices[0].message.content
+        used_token = str(response.usage)
+        return ai_summarization, used_token
 
-    async def _resummarize_message(self, message, max_byte_size=3000) -> str:
+    async def _resummarize_message(self, message: str, max_byte_size=3000) -> str:
         """将过长的消息进行重新总结为短消息
-        规则: 一个汉字占3个字节,ai输入不能超过3000bytes,所以
+        规则: 一个汉字占3个字节,ai输入不能超过3000bytes,所以是1000字
         1.将list中每项信息压缩之1/2,
         2.再合并起来为str A
         3.判断A是否超过3000bytes,如果超过则继续压缩,直到符合
         """
         # 截取消息
-        content_list = self._content_cutting(message, max_byte_size=3000)
-        for content in content_list:
-            content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为500字以内消息:"+message
-            message = self.get_ai_message_api_str(content)
-        # while len(message.encode('utf-8')) > max_byte_size:
-        #     content="如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为500字以内消息:"+message
-        #     message=self.get_ai_message_api_str(content)
-        return message
-
-    async def _generate_ai_message(self, content_cut_origin_record) -> str:
-        """逐段生成ai总结，并计算token
-        """
-        if len(content_cut_origin_record) > 1:
-            ai_summarization = ""
-            used_tokens = ""
-            for record in content_cut_origin_record:
-                response = await self.get_ai_message_res(record)
-                ai_summary = response.choices[0].message.content
-                ai_summarization = ai_summary+"\n===分割===\n"+ai_summarization
-                used_token = response.usage
-                used_tokens = used_tokens+str(used_token)
-                print(f"Staging Completed!")
-        else:
-            response = await self.get_ai_message_res(content_cut_origin_record[0])
-            ai_summary = response.choices[0].message.content
-            ai_summarization = ai_summary
-            used_token = response.usage
-            used_tokens = str(used_token)
-            print(f"Staging Completed!")
-        return ai_summarization, used_tokens
+        while True:
+            message_combined = ""
+            content_list = self._content_cutting(message, max_byte_size=3000)
+            for content in content_list:
+                content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为500字以内消息:"+message
+                message_ai = self.get_ai_response_api_message_str(content)
+                message_combined = message_ai + "\n" + message_combined
+            if len(message_combined.encode('utf-8')) <= max_byte_size:
+                break
+            else:
+                message = message_combined
+        return message_combined
 
 # Filters:
 
@@ -163,6 +147,7 @@ class Summary:
             chunks_list.append(current_chunk)
         return chunks_list
 
+# message handle:
     async def get_length(self) -> str:
         """获取过滤后消息总长度
         """
@@ -174,20 +159,19 @@ class Summary:
     async def message_handle(self) -> tuple[list[str], str]:
         """1、处理原始消息,先过滤，
         2、然后再切割,获得切割后的消息list
-        3、将切割后的消息逐段丢给ai, 并将返回结果拼起来
         4、ai结果切割
         """
-        record = await self._get_message()
+        record = await self._get_record()
         content_filter = await self.filter(record)
-        content_cut_origin_record = await self._content_cutting(content_filter, max_byte_size=3000)
+        # content_cut_origin_record = await self._content_cutting(content_filter, max_byte_size=3000)
         # 3、生成并拼接ai总结
         # 如果content_cut_origin_record为空,则返回数据不足
-        if content_cut_origin_record == [""]:
+        if content_filter == "":
             ai_summarization_cut = ["数据不足"]
             used_tokens = "数据不足"
         else:
-            ai_summarization, used_tokens = await self._generate_ai_message(
-                content_cut_origin_record)
+            ai_summarization, used_tokens = await self.get_ai_message_res(
+                content_filter)
             # 4、ai结果切割
             ai_summarization_cut = await self._content_cutting(ai_summarization, max_byte_size=10000)
 
