@@ -23,13 +23,14 @@ matcher_ac = on_command(
     'ac·堕', priority=3, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
 
-async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent, prompt: str = "总结这段信息,字数在300字以内"):
+async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent, prompt: str = "总结这段信息,字数在300字以内", resum_prompt: str = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为800字以内消息:"):
     '''生成并逐段发送ai消息
     '''
     try:
         gid = int(event.group_id)
-        summary = Summary(plugin_config, qq_group_id=gid, prompt=prompt)
-        total_length = await summary.get_length()
+        summary = Summary(plugin_config, qq_group_id=gid,
+                          prompt=prompt, resum_prompt=resum_prompt)
+        # total_length = await summary.get_length()
         ai_summarization_cut, used_tokens = await summary.message_handle()
         # await matcher.send(f"message length(utf-8) : {total_length} slices count:{len(ai_summarization_cut)}")
         for record in ai_summarization_cut:
@@ -57,5 +58,5 @@ async def call_robot(bot: Bot, event: GroupMessageEvent, matcher: Matcher, promp
 
 @matcher_ac.handle()
 async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
-    prompt = "并结合这些词句,对其他人说一句话,字数在10字以内,要求幽默风趣"
+    prompt = "并结合这些词句,假装你是很凶狠邪恶的人,口吻傲慢，对其他人说一句话,字数在10字以内"
     await send_ai_message(matcher, bot, event, prompt)
