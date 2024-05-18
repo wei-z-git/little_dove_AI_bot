@@ -23,7 +23,7 @@ matcher_ac = on_command(
     'ac·堕', priority=3, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
 
-async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent, prompt: str = "总结这段聊天记录,字数在300字以内"):
+async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent, prompt: str = "总结这段信息,字数在300字以内"):
     '''生成并逐段发送ai消息
     '''
     try:

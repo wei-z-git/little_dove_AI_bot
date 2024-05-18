@@ -6,6 +6,9 @@ require("nonebot_plugin_chatrecorder")
 from nonebot_plugin_chatrecorder import get_messages_plain_text
 from datetime import datetime
 from typing import Tuple
+from openai import RateLimitError
+import time
+from nonebot import logger
 
 
 class Summary:
@@ -21,6 +24,7 @@ class Summary:
         self.exclude_id1s = plugin_config.exclude_user_list
         self.qq_group_id = qq_group_id
         self.prompt = prompt
+
 # Get records:
 
     async def _get_record(self) -> list:
@@ -47,14 +51,28 @@ class Summary:
         返回值:
         ChatCompletion: AI生成的聊天回复内容。
         """
-        response = self.client.chat.completions.create(
-            model="Llama3-Chinese-8B-Instruct",
-            messages=[
-                {"role": "user", "content": content}
-            ],
-            temperature=0.3,
-            stream=False
-        )
+        max_retries = 5  # 最大重试次数
+        retry_delay = 3  # 重试延迟时间（秒）
+        retries = 0
+        while retries < max_retries:
+            try:
+                response = self.client.chat.completions.create(
+                    model="Llama3-Chinese-8B-Instruct",
+                    messages=[
+                        {"role": "user", "content": content}
+                    ],
+                    temperature=0.3,
+                    stream=False
+                )
+                return response
+            except RateLimitError as e:
+                retries += 1
+                if retries >= max_retries:
+                    logger.opt(exception=True).error("RateLimitError")
+                    response = ChatCompletion(id="ErrorHander", choices=[{"finish_reason":"stop","index":0,"message": {"content":"未能获取","role":"assistant" }}], created=0, model="", object="chat.completion", system_fingerprint=None, usage=None)
+                    return response
+                logger.warning(f"retries: {retries}/{max_retries}")
+                time.sleep(retry_delay)
         return response
 
     async def get_ai_response_api_message_str(self, content) -> str:
@@ -63,17 +81,21 @@ class Summary:
         * ``str``: 消息记录文本
         """
         response = await self.get_ai_response_api(content)
-        return response.choices[0].message.content
+        response_text=response.choices[0].message.content
+        return response_text
 # get ai message:
 
     async def get_ai_message_res(self, message: str, max_byte_size=3000) -> Tuple[str, str]:
         """异步获取AI回复消息的结果, 包含token和ai message
         """
         message = await self._resummarize_message(message, max_byte_size)
-        content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句,"+self.prompt+":" + message
+        content = "如下是一段信息,请提取有意义的词句,"+self.prompt+":" + message
         response = await self.get_ai_response_api(content)
-        ai_summarization = response.choices[0].message.content
-        used_token = str(response.usage)
+        if response and response.choices and response.choices[0].message.content:
+            ai_summarization = response.choices[0].message.content
+        else:
+            ai_summarization = "未能生成有效的AI回复"
+        used_token = str(response.usage) if response else "未使用token"
         return ai_summarization, used_token
 
     async def _resummarize_message(self, message: str, max_byte_size=3000) -> str:
@@ -84,17 +106,21 @@ class Summary:
         3.判断A是否超过3000bytes,如果超过则继续压缩,直到符合
         """
         # 截取消息
+        loop_count = 0
         while True:
+            loop_count += 1
             message_combined = ""
-            content_list = await self._content_cutting(message, max_byte_size=3000)
+            content_list = await self._content_cutting(message, max_byte_size=5000)
+            logger.info(f"content_list长度:{len(content_list)}")
             for content in content_list:
-                content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为500字以内消息:"+message
+                content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为800字以内消息:"+content
                 message_ai = await self.get_ai_response_api_message_str(content)
                 message_combined = message_ai + "\n" + message_combined
             if len(message_combined.encode('utf-8')) <= max_byte_size:
                 break
             else:
                 message = message_combined
+        logger.info(f"循环次数: {loop_count}")
         return message_combined
 
 # Filters:
