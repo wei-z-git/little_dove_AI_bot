@@ -9,7 +9,7 @@ requires-python = ">=3.10, <4.0"
 adapters = [
     { name = "OneBot V11", module_name = "nonebot.adapters.onebot.v11" }
 ]
-plugins = ["qq-group-admin-plugin","nonebot_plugin_gocqhttp"]
+plugins = ["qq-group-admin-plugin","nonebot_plugin_gocqhttp","haruka_bot","nonebot_plugin_wordcloud","nonebot_plugin_easy_group_manager"]
 
 
 plugin_dirs = ["src/plugins"]

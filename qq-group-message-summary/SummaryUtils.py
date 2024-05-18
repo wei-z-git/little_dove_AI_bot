@@ -4,14 +4,18 @@ import zoneinfo
 from nonebot import require
 require("nonebot_plugin_chatrecorder")
 from nonebot_plugin_chatrecorder import get_messages_plain_text
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Tuple
+from openai import RateLimitError
+import time
+from nonebot import logger
 
 
 class Summary:
     """获取聊天记录，并生成聊天摘要
     """
 
-    def __init__(self, plugin_config, qq_group_id,prompt):
+    def __init__(self, plugin_config, qq_group_id, prompt):
         self.client = OpenAI(
             api_key=plugin_config.ai_secret_key,
             base_url="https://api.atomecho.cn/v1",
@@ -20,9 +24,10 @@ class Summary:
         self.exclude_id1s = plugin_config.exclude_user_list
         self.qq_group_id = qq_group_id
         self.prompt = prompt
+
 # Get records:
 
-    async def _get_message(self) -> list:
+    async def _get_record(self) -> list:
         """获取消息记录
         返回值:
         * ``List``: 消息记录列表
@@ -37,50 +42,86 @@ class Summary:
         )
         return records
 
-# get ai message:
-    async def get_ai_message_res(self, message: str) -> ChatCompletion:
-        """异步获取AI回复消息的结果。
+    async def get_ai_response_api(self, content) -> ChatCompletion:
+        """调用llama api,获取AI回复消息的结果。
 
         参数:
-        message (str): 需要AI进行响应的用户消息文本。
+        content (str): 需要AI进行响应的用户消息文本。
 
         返回值:
         ChatCompletion: AI生成的聊天回复内容。
         """
-        content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，"+self.prompt+":" + message
-        # content_list = await self._content_cutting(content)
-        response = self.client.chat.completions.create(
-            model="Llama3-Chinese-8B-Instruct",
-            messages=[
-                {"role": "user", "content": content}
-            ],
-            temperature=0.3,
-            stream=False
-        )
+        max_retries = 5  # 最大重试次数
+        retry_delay = 3  # 重试延迟时间（秒）
+        retries = 0
+        while retries < max_retries:
+            try:
+                response = self.client.chat.completions.create(
+                    model="Llama3-Chinese-8B-Instruct",
+                    messages=[
+                        {"role": "user", "content": content}
+                    ],
+                    temperature=0.3,
+                    stream=False
+                )
+                return response
+            except RateLimitError as e:
+                retries += 1
+                if retries >= max_retries:
+                    logger.opt(exception=True).error("RateLimitError")
+                    response = ChatCompletion(id="ErrorHander", choices=[{"finish_reason":"stop","index":0,"message": {"content":"未能获取","role":"assistant" }}], created=0, model="", object="chat.completion", system_fingerprint=None, usage=None)
+                    return response
+                logger.warning(f"retries: {retries}/{max_retries}")
+                time.sleep(retry_delay)
         return response
 
-    async def _generate_ai_message(self, content_cut_origin_record) -> str:
-        """逐段生成ai总结，并计算token
+    async def get_ai_response_api_message_str(self, content) -> str:
+        """获取消息记录对象的内容, string
+        返回值:
+        * ``str``: 消息记录文本
         """
-        if len(content_cut_origin_record) > 1:
-            ai_summarization = ""
-            used_tokens = ""
-            for record in content_cut_origin_record:
-                response = await self.get_ai_message_res(record)
-                ai_summary = response.choices[0].message.content
-                ai_summarization = ai_summary+"\n===分割===\n"+ai_summarization
-                used_token = response.usage
-                used_tokens = used_tokens+str(used_token)
-                print(f"Staging Completed!")
-        else:
-            response = await self.get_ai_message_res(content_cut_origin_record[0])
-            ai_summary = response.choices[0].message.content
-            ai_summarization = ai_summary
-            used_token = response.usage
-            used_tokens = str(used_token)
-            print(f"Staging Completed!")
-        return ai_summarization, used_tokens
+        response = await self.get_ai_response_api(content)
+        response_text=response.choices[0].message.content
+        return response_text
+# get ai message:
 
+    async def get_ai_message_res(self, message: str, max_byte_size=3000) -> Tuple[str, str]:
+        """异步获取AI回复消息的结果, 包含token和ai message
+        """
+        message = await self._resummarize_message(message, max_byte_size)
+        content = "如下是一段信息,请提取有意义的词句,"+self.prompt+":" + message
+        response = await self.get_ai_response_api(content)
+        if response and response.choices and response.choices[0].message.content:
+            ai_summarization = response.choices[0].message.content
+        else:
+            ai_summarization = "未能生成有效的AI回复"
+        used_token = str(response.usage) if response else "未使用token"
+        return ai_summarization, used_token
+
+    async def _resummarize_message(self, message: str, max_byte_size=3000) -> str:
+        """将过长的消息进行重新总结为短消息
+        规则: 一个汉字占3个字节,ai输入不能超过3000bytes,所以是1000字
+        1.将list中每项信息压缩之1/2,
+        2.再合并起来为str A
+        3.判断A是否超过3000bytes,如果超过则继续压缩,直到符合
+        """
+        # 截取消息
+        loop_count = 0
+        while True:
+            loop_count += 1
+            message_combined = ""
+            content_list = await self._content_cutting(message, max_byte_size=5000)
+            logger.info(f"content_list长度:{len(content_list)}")
+            for content in content_list:
+                content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为800字以内消息:"+content
+                message_ai = await self.get_ai_response_api_message_str(content)
+                message_combined = message_ai + "\n" + message_combined
+            if len(message_combined.encode('utf-8')) <= max_byte_size:
+                break
+            else:
+                message = message_combined
+        logger.info(f"循环次数: {loop_count}")
+        return message_combined
 
 # Filters:
 
@@ -132,6 +173,7 @@ class Summary:
             chunks_list.append(current_chunk)
         return chunks_list
 
+# message handle:
     async def get_length(self) -> str:
         """获取过滤后消息总长度
         """
@@ -143,20 +185,19 @@ class Summary:
     async def message_handle(self) -> tuple[list[str], str]:
         """1、处理原始消息,先过滤，
         2、然后再切割,获得切割后的消息list
-        3、将切割后的消息逐段丢给ai, 并将返回结果拼起来
         4、ai结果切割
         """
-        record = await self._get_message()
+        record = await self._get_record()
         content_filter = await self.filter(record)
-        content_cut_origin_record = await self._content_cutting(content_filter, max_byte_size=3000)
+        # content_cut_origin_record = await self._content_cutting(content_filter, max_byte_size=3000)
         # 3、生成并拼接ai总结
         # 如果content_cut_origin_record为空,则返回数据不足
-        if content_cut_origin_record == [""]:
+        if content_filter == "":
             ai_summarization_cut = ["数据不足"]
             used_tokens = "数据不足"
         else:
-            ai_summarization, used_tokens = await self._generate_ai_message(
-                content_cut_origin_record)
+            ai_summarization, used_tokens = await self.get_ai_message_res(
+                content_filter)
             # 4、ai结果切割
             ai_summarization_cut = await self._content_cutting(ai_summarization, max_byte_size=10000)
 

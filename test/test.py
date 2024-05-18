@@ -21,3 +21,26 @@ for chunk_number in range(num_chunks):
     print(current_chunk)
     print(1)
     # 可以在这里添加适当的错误处理逻辑，例如检查响应状态码等
+
+    # async def _generate_ai_message(self, content_cut_origin_record) -> str:
+    #     """逐段生成ai总结，并计算token
+    #     [TO BE REMOVED]
+    #     """
+    #     if len(content_cut_origin_record) > 1:
+    #         ai_summarization = ""
+    #         used_tokens = ""
+    #         for record in content_cut_origin_record:
+    #             response = await self.get_ai_message_res(record)
+    #             ai_summary = response.choices[0].message.content
+    #             ai_summarization = ai_summary+"\n===分割===\n"+ai_summarization
+    #             used_token = response.usage
+    #             used_tokens = used_tokens+str(used_token)
+    #             print(f"Staging Completed!")
+    #     else:
+    #         response = await self.get_ai_message_res(content_cut_origin_record[0])
+    #         ai_summary = response.choices[0].message.content
+    #         ai_summarization = ai_summary
+    #         used_token = response.usage
+    #         used_tokens = str(used_token)
+    #         print(f"Staging Completed!")
+    #     return ai_summarization, used_tokens
