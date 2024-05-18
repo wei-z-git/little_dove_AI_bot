@@ -44,7 +44,7 @@ class Summary:
         records = await get_messages_plain_text(
             exclude_id1s=exclude_id1s,
             id2s=[self.qq_group_id],
-            time_start=datetime.now(beijing_tz).replace(hour=19),
+            time_start=datetime.now(beijing_tz).replace(hour=00),
             time_stop=datetime.now(beijing_tz).replace(hour=22),
         )
         return records
@@ -99,11 +99,8 @@ class Summary:
         message = await self._resummarize_message(message, max_byte_size)
         content = "如下是一段信息,请提取有意义的词句,"+self.prompt+":" + message
         response = await self.get_ai_response_api(content)
-        if response and response.choices and response.choices[0].message.content:
-            ai_summarization = response.choices[0].message.content
-        else:
-            ai_summarization = "未能生成有效的AI回复"
-        used_token = str(response.usage) if response else "未使用token"
+        ai_summarization = response.choices[0].message.content
+        used_token = response.usage
         return ai_summarization, used_token
 
     async def _resummarize_message(self, message: str, max_byte_size=3000) -> str:
