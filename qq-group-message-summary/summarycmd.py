@@ -19,9 +19,13 @@ matcher_summary = on_command(
 matcher_summary_pro = on_command(
     '今日群聊pro', priority=2, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
-matcher_ac = on_command(
+matcher_ac_fallen = on_command(
     'ac·堕', priority=3, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
+matcher_ac_god = on_command(
+    'ac·神', priority=3, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
+matcher_ac_angel = on_command(
+    'ac·天使', priority=3, permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
 
 async def send_ai_message(matcher: Matcher, bot: Bot, event: GroupMessageEvent, prompt: str = "总结这段信息,字数在300字以内", resum_prompt: str = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为800字以内消息:"):
     '''生成并逐段发送ai消息
@@ -56,7 +60,17 @@ async def call_robot(bot: Bot, event: GroupMessageEvent, matcher: Matcher, promp
     await send_ai_message(matcher, bot, event, prompt)
 
 
-@matcher_ac.handle()
+@matcher_ac_fallen.handle()
 async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
     prompt = "并结合这些词句,假装你是很凶狠邪恶的人,口吻傲慢，对其他人说一句话,字数在10字以内"
+    await send_ai_message(matcher, bot, event, prompt)
+
+@matcher_ac_god.handle()
+async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
+    prompt = "并结合这些词句,假装你是很博爱善良的人,口吻友好热情积极，对其他人说一句话,字数在10字以内"
+    await send_ai_message(matcher, bot, event, prompt)
+
+@matcher_ac_angel.handle()
+async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
+    prompt = "并结合这些词句,假装你是很可爱的小女孩,口吻天真无邪富有童趣，对其他人说一句话,字数在10字以内"
     await send_ai_message(matcher, bot, event, prompt)
