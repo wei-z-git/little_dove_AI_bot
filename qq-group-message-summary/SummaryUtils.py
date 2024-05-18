@@ -15,7 +15,13 @@ class Summary:
     """获取聊天记录，并生成聊天摘要
     """
 
-    def __init__(self, plugin_config, qq_group_id, prompt):
+    def __init__(self, plugin_config, qq_group_id, prompt, resum_prompt: str = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为800字以内消息:"):
+        """初始化函数
+        :param plugin_config: 插件配置对象，包含AI密钥、关键词文件路径和排除用户列表等配置
+        :param qq_group_id: QQ群ID
+        :param prompt: ai最终prompt
+        :param resum_prompt:如果字数超过限制，通过此prompt进行预总结
+        """        
         self.client = OpenAI(
             api_key=plugin_config.ai_secret_key,
             base_url="https://api.atomecho.cn/v1",
@@ -24,6 +30,7 @@ class Summary:
         self.exclude_id1s = plugin_config.exclude_user_list
         self.qq_group_id = qq_group_id
         self.prompt = prompt
+        self.resum_prompt=resum_prompt
 
 # Get records:
 
@@ -37,7 +44,7 @@ class Summary:
         records = await get_messages_plain_text(
             exclude_id1s=exclude_id1s,
             id2s=[self.qq_group_id],
-            time_start=datetime.now(beijing_tz).replace(hour=0),
+            time_start=datetime.now(beijing_tz).replace(hour=00),
             time_stop=datetime.now(beijing_tz).replace(hour=22),
         )
         return records
@@ -64,6 +71,7 @@ class Summary:
                     temperature=0.3,
                     stream=False
                 )
+                print("调用llama api")
                 return response
             except RateLimitError as e:
                 retries += 1
@@ -73,7 +81,7 @@ class Summary:
                     return response
                 logger.warning(f"retries: {retries}/{max_retries}")
                 time.sleep(retry_delay)
-        return response
+        
 
     async def get_ai_response_api_message_str(self, content) -> str:
         """获取消息记录对象的内容, string
@@ -91,11 +99,8 @@ class Summary:
         message = await self._resummarize_message(message, max_byte_size)
         content = "如下是一段信息,请提取有意义的词句,"+self.prompt+":" + message
         response = await self.get_ai_response_api(content)
-        if response and response.choices and response.choices[0].message.content:
-            ai_summarization = response.choices[0].message.content
-        else:
-            ai_summarization = "未能生成有效的AI回复"
-        used_token = str(response.usage) if response else "未使用token"
+        ai_summarization = response.choices[0].message.content
+        used_token = response.usage
         return ai_summarization, used_token
 
     async def _resummarize_message(self, message: str, max_byte_size=3000) -> str:
@@ -113,7 +118,7 @@ class Summary:
             content_list = await self._content_cutting(message, max_byte_size=5000)
             logger.info(f"content_list长度:{len(content_list)}")
             for content in content_list:
-                content = "如下是一段多个用户参与的聊天记录,请提取有意义的词句，提炼为800字以内消息:"+content
+                content = self.resum_prompt+content
                 message_ai = await self.get_ai_response_api_message_str(content)
                 message_combined = message_ai + "\n" + message_combined
             if len(message_combined.encode('utf-8')) <= max_byte_size:
