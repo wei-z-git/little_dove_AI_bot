@@ -1,4 +1,4 @@
-from nonebot import on_command, get_bot
+from nonebot import on_command
 from nonebot.adapters import Message
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, MessageSegment,Event
 from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
@@ -59,7 +59,6 @@ async def kicker_group_mem(bot: Bot, matcher: Matcher, event: GroupMessageEvent)
             qq_nickname = member['nickname']
             print(qq_num)
             await bot.set_group_kick(group_id=gid, user_id=qq_num, reject_add_request="false")
-            bot=get_bot("3320741388")
             message="已将 " + str(qq_nickname)+":"+str(qq_num) + " 折跃去冷库！嗖~~\n --消息来自小鸠Joe机器人"
             await bot.send(event,message)
 
