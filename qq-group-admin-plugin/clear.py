@@ -1,4 +1,4 @@
-from nonebot import on_command, get_bot
+from nonebot import on_command
 from nonebot.adapters import Message
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, MessageSegment,Event
 from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
@@ -22,7 +22,7 @@ async def search_group_mem_list_detail(bot: Bot, matcher: Matcher, event: GroupM
     """
     gid = int(event.group_id)
     try:
-        member_list = await get_bot("1141560393").call_api("get_group_member_list", group_id=gid, no_cache=True)
+        member_list = await bot.call_api("get_group_member_list", group_id=gid, no_cache=True)
         fly_list = order_member_by_time(member_list)
         await matcher.send("冷库食材详细清单: \n"+str(fly_list)+"\n --消息来自小鸠Joe机器人")
 
@@ -36,7 +36,7 @@ async def search_group_mem_list(bot: Bot, matcher: Matcher, event: GroupMessageE
     """
     gid = int(event.group_id)
     try:
-        member_list = await get_bot("1141560393").call_api("get_group_member_list", group_id=gid, no_cache=True)
+        member_list = await bot.call_api("get_group_member_list", group_id=gid, no_cache=True)
         fly_list = order_member_by_time(member_list)
         fly_list_simple = ",\n".join(
             [f"{d['nickname']}:{d['user_id']}" for d in fly_list])
@@ -52,14 +52,13 @@ async def kicker_group_mem(bot: Bot, matcher: Matcher, event: GroupMessageEvent)
     """
     gid = int(event.group_id)
     try:
-        member_list = await get_bot("1141560393").call_api("get_group_member_list", group_id=gid, no_cache=True)
+        member_list = await bot.call_api("get_group_member_list", group_id=gid, no_cache=True)
         fly_list = order_member_by_time(member_list)
         for member in fly_list:
             qq_num = member['user_id']
             qq_nickname = member['nickname']
             print(qq_num)
             await bot.set_group_kick(group_id=gid, user_id=qq_num, reject_add_request="false")
-            bot=get_bot("3320741388")
             message="已将 " + str(qq_nickname)+":"+str(qq_num) + " 折跃去冷库！嗖~~\n --消息来自小鸠Joe机器人"
             await bot.send(event,message)
 
