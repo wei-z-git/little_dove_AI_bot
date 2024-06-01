@@ -58,8 +58,8 @@ async def kicker_group_mem(bot: Bot, matcher: Matcher, event: GroupMessageEvent)
             qq_num = member['user_id']
             qq_nickname = member['nickname']
             print(qq_num)
+            bot=get_bot("1141560393")
             await bot.set_group_kick(group_id=gid, user_id=qq_num, reject_add_request="false")
-            bot=get_bot("3320741388")
             message="已将 " + str(qq_nickname)+":"+str(qq_num) + " 折跃去冷库！嗖~~\n --消息来自小鸠Joe机器人"
             await bot.send(event,message)
 
