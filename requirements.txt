@@ -14,7 +14,7 @@ nonebot-plugin-wordcloud==0.5.1
 # playwright==1.35.0
 
 # Required by nonebot-plugin-wordcloud
-wordcloud==1.8.2.2
+wordcloud==1.9.3
 nonebot-plugin-easy-group-manager
 
 nonebot_plugin_chatrecorder==0.4.1
