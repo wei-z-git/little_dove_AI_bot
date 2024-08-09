@@ -24,7 +24,7 @@ matcher_rebir = on_command(
 @matcher_rebir.handle()
 async def _(bot: Bot, event: GroupMessageEvent):
     # make sure bot is bot
-    bot = get_bot("3320741388")
+    bot = get_bot()
     sd = SDUtils(sd_host=plugin_config.sd_host, sd_port=plugin_config.sd_port)
     gid = int(event.group_id)
     try:
