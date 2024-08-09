@@ -52,13 +52,13 @@ async def kicker_group_mem(bot: Bot, matcher: Matcher, event: GroupMessageEvent)
     """
     gid = int(event.group_id)
     try:
-        member_list = await get_bot("1141560393").call_api("get_group_member_list", group_id=gid, no_cache=True)
+        member_list = await get_bot().call_api("get_group_member_list", group_id=gid, no_cache=True)
         fly_list = order_member_by_time(member_list)
         for member in fly_list:
             qq_num = member['user_id']
             qq_nickname = member['nickname']
             print(qq_num)
-            bot=get_bot("1141560393")
+            bot=get_bot()
             await bot.set_group_kick(group_id=gid, user_id=qq_num, reject_add_request="false")
             message="已将 " + str(qq_nickname)+":"+str(qq_num) + " 折跃去冷库！嗖~~\n --消息来自小鸠Joe机器人"
             await bot.send(event,message)
