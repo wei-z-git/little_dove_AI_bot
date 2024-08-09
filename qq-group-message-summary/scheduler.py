@@ -11,7 +11,7 @@ from nonebot.exception import ActionFailed
 
 async def send_chat_summary_daily():
     groups = plugin_config.ai_summary_groups
-    bot = nonebot.get_bot("3320741388")
+    bot = nonebot.get_bot()
     try:
         for gid in groups:
             summary = Summary(plugin_config, qq_group_id=gid)

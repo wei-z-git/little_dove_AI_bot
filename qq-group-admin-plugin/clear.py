@@ -22,7 +22,7 @@ async def search_group_mem_list_detail(bot: Bot, matcher: Matcher, event: GroupM
     """
     gid = int(event.group_id)
     try:
-        member_list = await get_bot("1141560393").call_api("get_group_member_list", group_id=gid, no_cache=True)
+        member_list = await get_bot().call_api("get_group_member_list", group_id=gid, no_cache=True)
         fly_list = order_member_by_time(member_list)
         await matcher.send("冷库食材详细清单: \n"+str(fly_list)+"\n --消息来自小鸠Joe机器人")
 
@@ -36,7 +36,7 @@ async def search_group_mem_list(bot: Bot, matcher: Matcher, event: GroupMessageE
     """
     gid = int(event.group_id)
     try:
-        member_list = await get_bot("1141560393").call_api("get_group_member_list", group_id=gid, no_cache=True)
+        member_list = await get_bot().call_api("get_group_member_list", group_id=gid, no_cache=True)
         fly_list = order_member_by_time(member_list)
         fly_list_simple = ",\n".join(
             [f"{d['nickname']}:{d['user_id']}" for d in fly_list])

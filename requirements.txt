@@ -1,4 +1,4 @@
-nonebot2[fastapi]==2.2.0
+nonebot2[fastapi]==2.3.2
 nonebot-adapter-onebot==2.4.3
 # plugins
 nonebot-plugin-gocqhttp==0.6.12
@@ -14,7 +14,7 @@ nonebot-plugin-wordcloud==0.5.1
 # playwright==1.35.0
 
 # Required by nonebot-plugin-wordcloud
-wordcloud==1.8.2.2
+wordcloud==1.9.3
 nonebot-plugin-easy-group-manager
 
 nonebot_plugin_chatrecorder==0.4.1
